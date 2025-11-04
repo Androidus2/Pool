@@ -67,6 +67,9 @@ vector<Circle> bile;
 vector<Circle> gauri;
 vector<Manta> mante;
 
+vector<Circle> animationBackgroundHoles;
+vector<Circle> animationBalls;
+
 
 //  Crearea si compilarea obiectelor de tip shader;
 //	Trebuie sa fie in acelasi director cu proiectul actual;
@@ -162,6 +165,47 @@ void AddTac()
 	tac.whiteBallCenter = initialWhiteBallPosition;
 }
 
+void AddAnimation() {
+	animationBackgroundHoles.clear();
+	animationBalls.clear();
+
+	animationBackgroundHoles.push_back({ {110.f, 25.f}, 20.f, "gaura.png"});
+	animationBackgroundHoles.push_back({ {160.f, 25.f}, 20.f, "gaura.png" });
+	animationBackgroundHoles.push_back({ {210.f, 25.f}, 20.f, "gaura.png" });
+	animationBackgroundHoles.push_back({ {260.f, 25.f}, 20.f, "gaura.png" });
+	animationBackgroundHoles.push_back({ {310.f, 25.f}, 20.f, "gaura.png" });
+	animationBackgroundHoles.push_back({ {360.f, 25.f}, 20.f, "gaura.png" });
+	animationBackgroundHoles.push_back({ {410.f, 25.f}, 20.f, "gaura.png" });
+
+	animationBackgroundHoles.push_back({ {590.f, 25.f}, 20.f, "gaura.png" });
+	animationBackgroundHoles.push_back({ {640.f, 25.f}, 20.f, "gaura.png" });
+	animationBackgroundHoles.push_back({ {690.f, 25.f}, 20.f, "gaura.png" });
+	animationBackgroundHoles.push_back({ {740.f, 25.f}, 20.f, "gaura.png" });
+	animationBackgroundHoles.push_back({ {790.f, 25.f}, 20.f, "gaura.png" });
+	animationBackgroundHoles.push_back({ {840.f, 25.f}, 20.f, "gaura.png" });
+	animationBackgroundHoles.push_back({ {890.f, 25.f}, 20.f, "gaura.png" });
+
+	// 5 11 3 2 10 9 7 14 4 13 12 6 15 1
+	animationBalls.push_back({ {310.f, 25.f}, 20.f, "5bun.png" });
+	animationBalls.push_back({ {690.f, 25.f}, 20.f, "11bun.png" });
+	animationBalls.push_back({ {210.f, 25.f}, 20.f, "3bun.png" });
+	animationBalls.push_back({ {160.f, 25.f}, 20.f, "2bun.png" });
+	animationBalls.push_back({ {640.f, 25.f}, 20.f, "10bun.png" });
+	animationBalls.push_back({ {590.f, 25.f}, 20.f, "9bun.png" });
+	animationBalls.push_back({ {410.f, 25.f}, 20.f, "7bun.png" });
+	animationBalls.push_back({ {840.f, 25.f}, 20.f, "14bun.png" });
+	animationBalls.push_back({ {260.f, 25.f}, 20.f, "4bun.png" });
+	animationBalls.push_back({ {790.f, 25.f}, 20.f, "13bun.png" });
+	animationBalls.push_back({ {740.f, 25.f}, 20.f, "12bun.png" });
+	animationBalls.push_back({ {360.f, 25.f}, 20.f, "6bun.png" });
+	animationBalls.push_back({ {890.f, 25.f}, 20.f, "15bun.png" });
+	animationBalls.push_back({ {110.f, 25.f}, 20.f, "1bun.png" });
+
+
+	for (auto& ball : animationBalls)
+		ball.active = false;
+}
+
 //  Se initializeaza un Vertex Buffer Object (VBO) pentru tranferul datelor spre memoria placii grafice (spre shadere);
 //  In acesta se stocheaza date despre varfuri (coordonate, culori, indici, texturare etc.);
 void CreateVBO(void)
@@ -255,6 +299,7 @@ void Initialize(void)
 	AddGauriInitiale();
 	AddMante();
 	AddTac();
+	AddAnimation();
 }
 
 //  Functia de desenarea a graficii pe ecran;
@@ -294,6 +339,19 @@ void RenderFunction(void)
 		tac.speed = speed;
 		tac.drawTac(VboId, myMatrixLocation, resizeMatrix);
 	}
+
+	glUniform1i(glGetUniformLocation(ProgramId, "withTexture"), 1);
+	glUniform1i(glGetUniformLocation(ProgramId, "color"), 0);
+	for (auto& animationHole : animationBackgroundHoles) {
+		animationHole.drawCircle(VboId, myMatrixLocation, resizeMatrix, textureLocation);
+	}
+	for (auto& animationBall : animationBalls) {
+		if (animationBall.active) {
+			animationBall.animate(0.03f);
+			animationBall.drawCircle(VboId, myMatrixLocation, resizeMatrix, textureLocation);
+		}
+	}
+
 	glutSwapBuffers();	//	Inlocuieste imaginea deseneata in fereastra cu cea randata; 
 	glFlush();	//  Asigura rularea tuturor comenzilor OpenGL apelate anterior;
 }
@@ -337,6 +395,9 @@ void UseMouse(int button, int state, int x, int y)
 		break;
 	}
 	case GLUT_RIGHT_BUTTON:			//	CLICK dreapta => dreptunghiurile se misca spre drepta;
+		/*for(int i=0; i < animationBalls.size(); i++)
+			if(!animationBalls[i].active)
+				animationBalls[i].playAnimation();*/
 		break;
 	default:
 		break;
@@ -385,9 +446,15 @@ void update(int value)
 
 		for (auto& gaura : gauri)
 		{
-			if ((bile[i].center - gaura.center).GetMagnitude() < (bile[i].radius + gaura.radius) / 2)
+			if (bile[i].active && (bile[i].center - gaura.center).GetMagnitude() < (bile[i].radius + gaura.radius) / 2)
 			{
 				bile[i].active = false;
+				if (i != 0 && i != 4) {
+					int ind = i - 1;
+					if (i > 4)
+						ind--;
+					animationBalls[ind].playAnimation();
+				}
 			}
 		}
 	}
@@ -425,6 +492,7 @@ void ProcessSpecialKeys(int key, int xx, int yy)
 	case GLUT_KEY_F4:
 		moving = false;
 		AddBileInitiale();
+		AddAnimation();
 	}
 }
 

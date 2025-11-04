@@ -14,6 +14,13 @@ struct Circle {
 	GLuint textureId;
 	bool active = true;
 
+	// animation / transform
+	glm::mat4 transformMatrix = glm::mat4(1.0f); // holds T(center)*R*S*T(-center)
+	float animTime = 0.0f;
+	bool animPlaying = false;
+	float animDuration = 1.0f; // seconds
+
+
 	Circle();
 	Circle(Vector2 center, float radius);
 	Circle(Vector2 center, float radius, Vector2 velocity);
@@ -29,4 +36,6 @@ struct Circle {
 	void collisionManta(Manta& manta);
 	void collisionManta(Circle& nextPoz, Manta& manta);
 
+	void animate(float deltaTime);
+	void playAnimation(float durationSeconds = 1.0f);
 };

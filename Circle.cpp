@@ -1,9 +1,13 @@
-#include "Circle.h"
+﻿#include "Circle.h"
 #include <math.h>
 #include <GL/glew.h> 
 #include <GL/freeglut.h>
 #include "SOIL.h"			//	Biblioteca pentru texturare;
 #include<iostream>
+#include "glm/glm.hpp"		//	Bibloteci utilizate pentru transformari grafice;
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtx/transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
 #include "Line.h"
 GLuint LoadTexture(const char* texturePath, GLuint &texture)
 {
@@ -166,7 +170,9 @@ void Circle::drawCircle(int VboId, int myMatrixLocation, glm::mat4 myMatrix, int
 		drawpoints.push_back(0.f);
 		drawpoints.push_back(1.f);
 	}
-	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+	glm::mat4 finalMatrix = myMatrix * transformMatrix;
+	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &finalMatrix[0][0]);
+
 
 	glBindBuffer(GL_ARRAY_BUFFER, VboId);
 	glBufferData(GL_ARRAY_BUFFER, drawpoints.size() * sizeof(float), drawpoints.data(), GL_STATIC_DRAW);
@@ -257,4 +263,40 @@ void Circle::collisionManta(Circle &prevPos, Manta &manta)
 }
 
 
+
+void Circle::animate(float deltaTime)
+{
+	if (!animPlaying) return;
+
+	animTime += deltaTime;
+	float t = animTime / animDuration;
+	if (t >= 1.0f) {
+		t = 1.0f;
+		animPlaying = false;
+	}
+
+	// linear interpolation; replace with easing if desired
+	float scale = t; // 0 -> 1
+	float rotationRad = glm::radians(360.0f * t);
+
+	// Build transform that rotates & scales around center:
+	// transformMatrix = T(center) * R(rotation) * S(scale) * T(-center)
+	glm::mat4 Tneg = glm::translate(glm::mat4(1.0f), glm::vec3(-this->center.x, -this->center.y, 0.0f));
+	glm::mat4 S = glm::scale(glm::mat4(1.0f), glm::vec3(scale, scale, 1.0f));
+	glm::mat4 R = glm::rotate(glm::mat4(1.0f), rotationRad, glm::vec3(0.0f, 0.0f, 1.0f));
+	glm::mat4 Tpos = glm::translate(glm::mat4(1.0f), glm::vec3(this->center.x, this->center.y, 0.0f));
+
+	transformMatrix = Tpos * R * S * Tneg;
+}
+
+
+
+void Circle::playAnimation(float durationSeconds)
+{
+	active = true;
+	animDuration = durationSeconds;
+	animTime = 0.0f;
+	animPlaying = true;
+	transformMatrix = glm::mat4(1.0f);
+}
 
