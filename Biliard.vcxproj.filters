@@ -1562,5 +1562,8 @@
     <Image Include="texturi\16bun.png">
       <Filter>Resource Files\textures</Filter>
     </Image>
+    <Image Include="lose.png">
+      <Filter>Source Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

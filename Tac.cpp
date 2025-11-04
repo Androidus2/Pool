@@ -7,7 +7,12 @@
 void Tac::drawTac(int VboId, int myMatrixLocation, glm::mat4 myMatrix)
 {
 
-	std::vector<Vector2> points = this->getPoints();
+	std::vector<Vector2> points;
+
+	points.push_back(leftUppermostPoint);
+	points.push_back(rightUppermostPoint);
+	points.push_back(rightLowermostPoint);
+	points.push_back(leftLowermostPoint);
 
 	std::vector<GLfloat> tacVertices;
 	for (auto pct : points)
@@ -17,8 +22,6 @@ void Tac::drawTac(int VboId, int myMatrixLocation, glm::mat4 myMatrix)
 		tacVertices.push_back(0.0f);
 		tacVertices.push_back(1.0f);
 	}
-
-
 
 
 	myMatrix = myMatrix * matTranslation  *matRotation ;
@@ -32,40 +35,6 @@ void Tac::drawTac(int VboId, int myMatrixLocation, glm::mat4 myMatrix)
 
 };
 
-Vector2 updateSinglePoint(Tac tac, Vector2 pt)
-{
-	glm::vec4 localPoint = glm::vec4{ pt.x, pt.y, 0.f, 1.f };
-	glm::vec4 newPoint = tac.matTranslation * localPoint;
-	pt.x = newPoint.x;
-	pt.y = newPoint.y;
-	return pt;
-}
-void Tac::updatePoint()
-{
-	leftLowermostPoint = updateSinglePoint(*this, leftLowermostPoint);
-	rightLowermostPoint = updateSinglePoint(*this, rightLowermostPoint);
-	rightUppermostPoint = updateSinglePoint(*this, rightUppermostPoint);
-	leftUppermostPoint = updateSinglePoint(*this, leftUppermostPoint);
-}
-
-
-std::vector<Vector2> Tac::getPoints()
-{
-	std::vector<Vector2> points;
-
-
-
-	Vector2 leftLowermostPoint = { leftUppermostPoint.x, leftUppermostPoint.y - thickness };
-	Vector2  rightUppermostPoint = { leftUppermostPoint.x + length, leftUppermostPoint.y - incline };
-	Vector2 rightLowermostPoint = {leftLowermostPoint.x+length, leftLowermostPoint.y+incline};
-
-	points.push_back(leftUppermostPoint);
-	points.push_back(rightUppermostPoint);
-	points.push_back(rightLowermostPoint);
-	points.push_back(leftLowermostPoint);
-	return points;
-}
-
 void Tac::moveToWhiteBall()
 {
 	Vector2 center = { (rightUppermostPoint.x + rightLowermostPoint.x) / 2, (rightUppermostPoint.y + rightLowermostPoint.y) / 2 };
@@ -77,14 +46,13 @@ void Tac::moveToWhiteBall()
 
 void Tac::pointToWhiteBall(Circle whiteBall) {
 
-	float offset = 25.f + speed * 2.f;
-	offset = 0;
+	//float offset = 25.f + speed * 2.f;
+	float offset = this->offset ;
 
 	Vector2 pivot = { (rightUppermostPoint.x + rightLowermostPoint.x) / 2, (rightUppermostPoint.y + rightLowermostPoint.y) / 2 };
-	Vector2 center = {(rightLowermostPoint.x + rightUppermostPoint.x + leftLowermostPoint.x + leftUppermostPoint.x)/4,
-					  (rightLowermostPoint.y + rightUppermostPoint.y + leftLowermostPoint.y + leftUppermostPoint.y) / 4 };
-	float dx =  this->mousePos.x - center.x;
-	float dy = center.y - this->mousePos.y;
+
+	float dx = this->mousePos.x - whiteBall.center.x;
+	float dy = this->mousePos.y - whiteBall.center.y ;
 	float angle = atan2(dy, dx);
 
 	
