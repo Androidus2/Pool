@@ -655,6 +655,7 @@ xcopy /y /d "$(ProjectDir)lib\x64\SOIL\*.dll" "$(OutDir)" &amp;</Command>
     <None Include="lib\x64\SOIL\SOIL.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="lose.png" />
     <Image Include="texturi\10bun.png" />
     <Image Include="texturi\11bun.png" />
     <Image Include="texturi\12bun.png" />

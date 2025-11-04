@@ -19,12 +19,16 @@ void main(void)
     {
         out_Color = texture(myTexture, tex_Coord);
     }
+    else if(color == 2)
+    {
+            out_Color = vec4(0.9059, 0.7647, 0.5686, 1.0);
+    }
+    else if(color == 1)
+    {
+        out_Color = vec4(1.0, 1.0, 1.0, 1.0);
+    }
     else
     {
         out_Color = vec4(0.6f, 0.3f, 0.0f, 1.0f);
-    }
-    if(color == 2)
-    {
-            out_Color = vec4(1.0, 1.0,1.0, 1.0);
     }
   }

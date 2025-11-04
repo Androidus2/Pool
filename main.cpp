@@ -57,21 +57,21 @@ glm::vec4 ecran = glm::vec4{ 1.0f, 1.0f, 1.0f, 0.0f };
 
 //	Variabile pentru proiectia ortogonala;
 float xMin = 0.f, xMax = 1000.f, yMin = 0.f, yMax = 500.f;
-bool moving = false;
+bool moving = false, movingTac= false;
 
 float radius = 20.f;
 float speed = 50.f;
 vector<Circle> bile;
-
+int tacIndex;
+glm::mat4 tacMatrix;
 
 vector<Circle> gauri;
 vector<Manta> mante;
+int blackBallIndex = 4;
+Tac tac;
 
+GLuint LoadTexture(const char* texturePath, GLuint& texture);
 
-//  Crearea si compilarea obiectelor de tip shader;
-//	Trebuie sa fie in acelasi director cu proiectul actual;
-//  Shaderul de varfuri / Vertex shader - afecteaza geometria scenei;
-//  Shaderul de fragment / Fragment shader - afecteaza culoarea pixelilor;
 void CreateShaders(void)
 {
 	ProgramId = LoadShaders("example.vert", "example.frag");
@@ -81,6 +81,88 @@ void CreateShaders(void)
 float xNegru = 700, yNegru = 250;
 
 Vector2 initialWhiteBallPosition = { 250.f,250.f};
+
+
+void drawLine(int VboId, int myMatrixLocation, glm::mat4 myMatrix)
+{
+	GLfloat points[] =
+	{
+		250.f, 0.f, 0.f, 1.f,
+		250.f, 500.f, 0.f, 1.f, 
+	};
+
+	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+	glBindBuffer(GL_ARRAY_BUFFER, VboId);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
+
+	glPointSize(10);
+	glDrawArrays(GL_LINES, 0, 2);
+
+
+};
+
+void drawPoint(int VboId, int myMatrixLocation, glm::mat4 myMatrix)
+{
+	GLfloat points[] =
+	{
+		250.f, 250.f, 0.f, 1.f,
+	};
+
+	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+	glBindBuffer(GL_ARRAY_BUFFER, VboId);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
+
+	glPointSize(25);
+	glEnable(GL_POINT_SMOOTH);
+	glDrawArrays(GL_POINTS, 0, 1);
+};
+
+
+bool gameover = false;
+void drawGameOver(int VboId, int myMatrixLocation, glm::mat4 myMatrix)
+{
+	GLfloat points[] =
+	{
+		0.f, 500.f, 0.f, 1.f,
+		1000.f, 500.f, 0.f, 1.f,
+		1000.f, 0.f, 0.f, 1.f,
+		0.f, 0.f, 0.f, 1.f,
+	};
+	GLuint gameOverText = LoadTexture("lose.png", gameOverText);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, gameOverText);
+	glUniform1i(textureLocation, 0);
+
+	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+	glBindBuffer(GL_ARRAY_BUFFER, VboId);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
+
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+}
+
+
+bool win = false;
+void drawWin(int VboId, int myMatrixLocation, glm::mat4 myMatrix)
+{
+	GLfloat points[] =
+	{
+
+		0.f, 500.f, 0.f, 1.f,
+		1000.f, 500.f, 0.f, 1.f,
+		1000.f, 0.f, 0.f, 1.f,
+		0.f, 0.f, 0.f, 1.f,
+	};
+	GLuint winOverText = LoadTexture("win.png", winOverText);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, winOverText);
+	glUniform1i(textureLocation, 0);
+
+	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+	glBindBuffer(GL_ARRAY_BUFFER, VboId);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
+
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+}
 
 void AddBileInitiale()
 {
@@ -148,13 +230,12 @@ void AddMante()
 
 }
 
-Tac tac;
 void AddTac()
 {
 	tac.leftUppermostPoint = { 0, 250 };
 	tac.length = 500;
-	tac.incline = 15;
-	tac.thickness = 40;
+	tac.incline = 13;
+	tac.thickness = 35;
 	tac.leftLowermostPoint = { tac.leftUppermostPoint.x, tac.leftUppermostPoint.y - tac.thickness };
 	tac.rightUppermostPoint = { tac.leftUppermostPoint.x + tac.length, tac.leftUppermostPoint.y - tac.incline };
 	tac.rightLowermostPoint = { tac.leftLowermostPoint.x + tac.length, tac.leftLowermostPoint.y + tac.incline };
@@ -263,8 +344,33 @@ void RenderFunction(void)
 	glClear(GL_COLOR_BUFFER_BIT);			//  Se curata ecranul OpenGL pentru a fi desenat noul continut;
 	
 	resizeMatrix = glm::ortho(xMin, xMax, yMin, yMax);
+
+	glUniform1i(glGetUniformLocation(ProgramId, "color"), 0);
+	if (gameover)
+	{
+		glUniform1i(glGetUniformLocation(ProgramId, "withTexture"), 1);
+		glUniform1i(glGetUniformLocation(ProgramId, "color"), 0);
+		drawGameOver(VboId, myMatrixLocation, resizeMatrix);
+		glutSwapBuffers();
+		glFlush();
+		return;
+	}
+	if (win)
+	{
+		glUniform1i(glGetUniformLocation(ProgramId, "withTexture"), 1);
+		glUniform1i(glGetUniformLocation(ProgramId, "color"), 0);
+		drawWin(VboId, myMatrixLocation, resizeMatrix);
+		glutSwapBuffers();
+		glFlush();
+		return;
+	}
 	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &resizeMatrix[0][0]);
 	glPointSize(5);
+
+
+	glUniform1i(glGetUniformLocation(ProgramId, "color"), 1);
+	drawLine(VboId, myMatrixLocation, resizeMatrix);
+	drawPoint(VboId, myMatrixLocation, resizeMatrix);
 
 	glUniform1i(glGetUniformLocation(ProgramId, "color"), 0);
 	glUniform1i(glGetUniformLocation(ProgramId, "withTexture"), 0);
@@ -294,8 +400,9 @@ void RenderFunction(void)
 		tac.speed = speed;
 		tac.drawTac(VboId, myMatrixLocation, resizeMatrix);
 	}
-	glutSwapBuffers();	//	Inlocuieste imaginea deseneata in fereastra cu cea randata; 
-	glFlush();	//  Asigura rularea tuturor comenzilor OpenGL apelate anterior;
+
+	glutSwapBuffers();	
+	glFlush();	
 }
 
 Vector2 transformScreenToWorld(int x, int y,
@@ -305,11 +412,9 @@ Vector2 transformScreenToWorld(int x, int y,
 	int screenWidth = glutGet(GLUT_WINDOW_WIDTH);
 	int screenHeight = glutGet(GLUT_WINDOW_HEIGHT);
 
-	// Normalize to [0,1]
 	float nx = static_cast<float>(x) / static_cast<float>(screenWidth);
-	float ny = 1.0f - static_cast<float>(y) / static_cast<float>(screenHeight); // flip Y
+	float ny = 1.0f - static_cast<float>(y) / static_cast<float>(screenHeight); 
 
-	// Map to world coords
 	Vector2 world;
 	world.x = xMin + nx * (xMax - xMin);
 	world.y = yMin + ny * (yMax - yMin);
@@ -334,10 +439,11 @@ void UseMouse(int button, int state, int x, int y)
 		dir = dir * speed;
 		bile[0].velocity = dir;
 		moving = true;
+		movingTac = true;
+		tacIndex = 100;
+		tacMatrix = tac.matTranslation * tac.matRotation;
 		break;
 	}
-	case GLUT_RIGHT_BUTTON:			//	CLICK dreapta => dreptunghiurile se misca spre drepta;
-		break;
 	default:
 		break;
 	}
@@ -346,65 +452,103 @@ void UseMouse(int button, int state, int x, int y)
 void update(int value)
 {
 
-	moving = false;
-	for (auto& bila:bile)
-		if (bila.active && bila.velocity.GetMagnitude() != 0)
-		{
-			moving = true;
-		}
-	if (bile[0].active == false && moving == false)
-	{
-		bile[0].center = Vector2{ 250.f,250.f };
-		bile[0].velocity = Vector2{ 0,0 };
-		bile[0].active = true;
-	}
 
-	vector<Circle> bileCopy;
-	for(auto &bila:bile)
+
+	if (movingTac)
 	{
-		bileCopy.push_back(bila);
-		if ( bila.active )
-			bila.moveCircle(xMin, xMax, yMin, yMax);
-	}
-	for(int i = 0;i<bile.size();i++)
-	{
-		for (int j = i+1; j < bile.size(); j++)
-		{
-			if ( bile[i].active && bile[j].active  && (bile[i].center - bile[j].center).GetMagnitude() < 2 * radius )
+		if (speed == 0)
+			movingTac = false;
+		else {
+			tac.offset -= speed * 40 / 100;
+			tac.pointToWhiteBall(bile[0]);
+
+			if (tac.offset < 15.0f)
 			{
-				bile[i].onHitBall(bile[j]);
-			}
-		}
-
-		for (auto& manta : mante)
-		{
-			if (bile[i].active)
-				//continue;
-				bile[i].collisionManta(bileCopy[i],manta);
-		}
-
-		for (auto& gaura : gauri)
-		{
-			if ((bile[i].center - gaura.center).GetMagnitude() < (bile[i].radius + gaura.radius) / 2)
-			{
-				bile[i].active = false;
+				movingTac = false;
 			}
 		}
 	}
+	else
+	{
+		tac.offset = 25.f + speed * 2.f;
+		moving = false;
+		for (auto& bila : bile)
+			if (bila.active && bila.velocity.GetMagnitude() != 0)
+			{
+				moving = true;
+			}
+		if (bile[0].active == false && moving == false)
+		{
+			bile[0].center = Vector2{ 250.f,250.f };
+			bile[0].velocity = Vector2{ 0,0 };
+			bile[0].active = true;
+		}
 
-	tac.pointToWhiteBall(bile[0]);
+		for (auto& bila : bile)
+		{
+			if (bila.active)
+				bila.moveCircle(xMin, xMax, yMin, yMax);
+		}
+		for (int i = 0; i < bile.size(); i++)
+		{
+			for (int j = i + 1; j < bile.size(); j++)
+			{
+				if (bile[i].active && bile[j].active && (bile[i].center - bile[j].center).GetMagnitude() < 2 * radius)
+				{
+					bile[i].onHitBall(bile[j]);
+				}
+			}
 
-	bileCopy.clear();
+			for (auto& manta : mante)
+			{
+				if (bile[i].active)
+					//continue;
+					bile[i].collisionManta(manta);
+			}
+
+			for (auto& gaura : gauri)
+			{
+				if ((bile[i].center - gaura.center).GetMagnitude() < (bile[i].radius + gaura.radius) / 2)
+				{
+					bile[i].active = false;
+					if (i == blackBallIndex) 
+					{
+						gameover = false;
+						for (int i = 0; i < bile.size(); i++)
+						{
+							if (i != 0 && bile[i].active)
+							{
+								gameover = true;
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		win = true;
+		for(int i=1;i<bile.size();i++)
+			if(bile[i].active == true)
+				win = false;
+
+		if (win)
+			win = bile[0].active;
+		tac.pointToWhiteBall(bile[0]);
+
+		if (moving == false)
+			tac.visible = true;
+		else
+		{
+			tac.visible = false;
+		}
+
+	}
 	// aici se pot face animatii
 	glutPostRedisplay();
 	glutTimerFunc(16, update, 0);
 
-	if (moving == false)
-		tac.visible = true;
-	else
-	{
-		tac.visible = false;
-	}
+
 }
 
 
@@ -413,25 +557,35 @@ void ProcessSpecialKeys(int key, int xx, int yy)
 	switch (key)			//	Procesarea tastelor 'LEFT', 'RIGHT', 'UP', 'DOWN'
 	{						//	duce la deplasarea patratului pe axele Ox si Oy;
 	case GLUT_KEY_UP:
-		speed += 1;
-		speed = speed > 100 ? 100 : speed;
-		cout << speed << " " << endl;
+		if (!movingTac) {
+			speed += 1;
+			speed = speed > 100 ? 100 : speed;
+			cout << speed << " " << endl;
+		}
 		break;
 	case GLUT_KEY_DOWN:
-		speed -= 1;
-		speed = speed < 0 ? 0 : speed;
-		cout << speed << " " << endl;
+		if (!movingTac) {
+			speed -= 1;
+			speed = speed < 0 ? 0 : speed;
+			cout << speed << " " << endl;
+		}
 		break;
 	case GLUT_KEY_F4:
 		moving = false;
+		gameover = false;
+		win = false;
 		AddBileInitiale();
 	}
 }
 
 void MouseView(int x, int y)
 {
-	tac.mousePos = { (float)x, (float)y };
+	Vector2 worldPos = transformScreenToWorld(x, y,
+		xMin, xMax,
+		yMin, yMax);
+	tac.mousePos = { worldPos.x, worldPos.y };
 	tac.direction = (bile[0].center - tac.mousePos).GetNormalized();
+
 }
 
 

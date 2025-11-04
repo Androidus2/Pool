@@ -174,32 +174,7 @@ void Circle::drawCircle(int VboId, int myMatrixLocation, glm::mat4 myMatrix, int
 
 }
 
-void Circle::collisionManta(Manta& manta)
-{
-	Vector2 a = manta.mainsegment1;
-	Vector2 b = manta.mainsegment2;
-
-	float distSq = center.DistanceToSegmentSqr(a, b);
-
-	bool hit =( distSq <= radius * radius);
-	
-	if (hit)
-	{
-		if (a.y < 250 && a.x == b.x)
-			this->velocity.x = -this->velocity.x;
-		else if (a.x < 500 && a.y == b.y)
-			this->velocity.y = -this->velocity.y;
-		else if (a.y > 250 && a.x == b.x)
-			this->velocity.x = -this->velocity.x;
-		else if (a.x > 500 && a.y == b.y)
-			this->velocity.y = -this->velocity.y;
-	}
-	manta.hit = hit;
-
-}
-
-
-void Circle::collisionManta(Circle &prevPos, Manta &manta)
+void Circle::collisionManta( Manta &manta)
 {
 	//Verifying with main segment
 	
