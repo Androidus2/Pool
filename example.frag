@@ -9,6 +9,7 @@ in vec2 tex_Coord;
 
 uniform sampler2D myTexture;
 uniform int withTexture;
+uniform int color;
 
 void main(void)
   {
@@ -21,5 +22,9 @@ void main(void)
     else
     {
         out_Color = vec4(0.6f, 0.3f, 0.0f, 1.0f);
+    }
+    if(color == 2)
+    {
+            out_Color = vec4(1.0, 1.0,1.0, 1.0);
     }
   }

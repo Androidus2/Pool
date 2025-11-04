@@ -114,6 +114,12 @@
     <ClCompile Include="Manta.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Line.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Tac.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\SOIL.h">
@@ -1017,6 +1023,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Manta.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Line.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Tac.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

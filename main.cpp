@@ -32,6 +32,7 @@
 #include <math.h>
 #include "SOIL.h"			//	Biblioteca pentru texturare;
 #include "Manta.h"
+#include "Tac.h"
 using namespace std;
 
 //  Identificatorii obiectelor de tip OpenGL;
@@ -77,13 +78,14 @@ void CreateShaders(void)
 	glUseProgram(ProgramId);
 }
 
-
 float xNegru = 700, yNegru = 250;
+
+Vector2 initialWhiteBallPosition = { 250.f,250.f};
 
 void AddBileInitiale()
 {
 	bile.clear();
-	bile.push_back(Circle({ 250.f,250.f }, radius, "16bun.png"));// alba
+	bile.push_back(Circle(initialWhiteBallPosition, radius, "16bun.png"));// alba
 
 	bile.push_back(Circle({ xNegru - radius * 4, yNegru }, radius, "5bun.png")); // 5
 
@@ -129,7 +131,6 @@ void AddMante()
 {
 	float radius = hole_radius;	float incline = 40;
 	float grosime = 2*radius - 2.5;
-
 	mante.push_back( Manta({2*radius, yMax}, {winWidth/2-radius, yMax}, { winWidth / 2 - radius -incline, yMax -grosime}, {2*radius + incline, yMax-grosime},
 					{ winWidth / 2 - radius - incline, yMax - grosime }, { 2 * radius + incline, yMax - grosime } ));
 	mante.push_back(Manta({ winWidth / 2 + radius, yMax }, { winWidth - 2 * radius, yMax }, { winWidth - 2 * radius - incline, yMax - grosime }, { winWidth / 2 + radius + incline, yMax - grosime },
@@ -145,6 +146,20 @@ void AddMante()
 		{ winWidth - grosime, winHeight - 2 * radius - incline }, { winWidth - grosime, 2 * radius + incline }));
 
 
+}
+
+Tac tac;
+void AddTac()
+{
+	tac.leftUppermostPoint = { 0, 250 };
+	tac.length = 500;
+	tac.incline = 15;
+	tac.thickness = 40;
+	tac.leftLowermostPoint = { tac.leftUppermostPoint.x, tac.leftUppermostPoint.y - tac.thickness };
+	tac.rightUppermostPoint = { tac.leftUppermostPoint.x + tac.length, tac.leftUppermostPoint.y - tac.incline };
+	tac.rightLowermostPoint = { tac.leftLowermostPoint.x + tac.length, tac.leftLowermostPoint.y + tac.incline };
+	tac.speed = speed;
+	tac.whiteBallCenter = initialWhiteBallPosition;
 }
 
 //  Se initializeaza un Vertex Buffer Object (VBO) pentru tranferul datelor spre memoria placii grafice (spre shadere);
@@ -239,6 +254,7 @@ void Initialize(void)
 	AddBileInitiale();
 	AddGauriInitiale();
 	AddMante();
+	AddTac();
 }
 
 //  Functia de desenarea a graficii pe ecran;
@@ -250,6 +266,7 @@ void RenderFunction(void)
 	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &resizeMatrix[0][0]);
 	glPointSize(5);
 
+	glUniform1i(glGetUniformLocation(ProgramId, "color"), 0);
 	glUniform1i(glGetUniformLocation(ProgramId, "withTexture"), 0);
 	for(Manta& manta:mante)
 	{
@@ -268,6 +285,15 @@ void RenderFunction(void)
 			bila.drawCircle(VboId, myMatrixLocation, resizeMatrix, textureLocation);
 	}
 
+	glUniform1i(glGetUniformLocation(ProgramId, "withTexture"), 0);
+	glUniform1i(glGetUniformLocation(ProgramId, "color"), 2);
+	if (tac.visible)
+	{
+		tac.whiteBallCenter = bile[0].center;
+		tac.moveToWhiteBall();
+		tac.speed = speed;
+		tac.drawTac(VboId, myMatrixLocation, resizeMatrix);
+	}
 	glutSwapBuffers();	//	Inlocuieste imaginea deseneata in fereastra cu cea randata; 
 	glFlush();	//  Asigura rularea tuturor comenzilor OpenGL apelate anterior;
 }
@@ -302,6 +328,7 @@ void UseMouse(int button, int state, int x, int y)
 		Vector2 screenCoord = transformScreenToWorld(x, y,
 			xMin, xMax,
 			yMin, yMax);
+		std::cout << screenCoord.x << " " << screenCoord.y << endl;
 		Vector2 dir = screenCoord - bile[0].center;
 		dir.Normalize();
 		dir = dir * speed;
@@ -318,6 +345,7 @@ void UseMouse(int button, int state, int x, int y)
 
 void update(int value)
 {
+
 	moving = false;
 	for (auto& bila:bile)
 		if (bila.active && bila.velocity.GetMagnitude() != 0)
@@ -330,13 +358,14 @@ void update(int value)
 		bile[0].velocity = Vector2{ 0,0 };
 		bile[0].active = true;
 	}
-	
+
+	vector<Circle> bileCopy;
 	for(auto &bila:bile)
 	{
+		bileCopy.push_back(bila);
 		if ( bila.active )
 			bila.moveCircle(xMin, xMax, yMin, yMax);
 	}
-
 	for(int i = 0;i<bile.size();i++)
 	{
 		for (int j = i+1; j < bile.size(); j++)
@@ -346,33 +375,36 @@ void update(int value)
 				bile[i].onHitBall(bile[j]);
 			}
 		}
-	}
-	
 
-	for (auto &bila:bile)
 		for (auto& manta : mante)
 		{
-			if (bila.active)
-				bila.collisionManta(manta);
+			if (bile[i].active)
+				//continue;
+				bile[i].collisionManta(bileCopy[i],manta);
 		}
 
-	for (int i = 0; i < bile.size(); i++)
-	{
 		for (auto& gaura : gauri)
 		{
-			if ((bile[i].center - gaura.center).GetMagnitude() < (bile[i].radius + gaura.radius)/2)
+			if ((bile[i].center - gaura.center).GetMagnitude() < (bile[i].radius + gaura.radius) / 2)
 			{
 				bile[i].active = false;
 			}
 		}
 	}
 
+	tac.pointToWhiteBall(bile[0]);
 
-
+	bileCopy.clear();
 	// aici se pot face animatii
 	glutPostRedisplay();
 	glutTimerFunc(16, update, 0);
 
+	if (moving == false)
+		tac.visible = true;
+	else
+	{
+		tac.visible = false;
+	}
 }
 
 
@@ -396,6 +428,12 @@ void ProcessSpecialKeys(int key, int xx, int yy)
 	}
 }
 
+void MouseView(int x, int y)
+{
+	tac.mousePos = { (float)x, (float)y };
+	tac.direction = (bile[0].center - tac.mousePos).GetNormalized();
+}
+
 
 int main(int argc, char* argv[])
 {
@@ -415,9 +453,11 @@ int main(int argc, char* argv[])
 	glutDisplayFunc(RenderFunction);	//  Desenarea scenei in fereastra;
 	glutCloseFunc(Cleanup);				//  Eliberarea resurselor alocate de program;
 	glutMouseFunc(UseMouse);
+	glutPassiveMotionFunc(MouseView);
 	glutTimerFunc(16, update, 0);
 	glutSpecialFunc(ProcessSpecialKeys);
 	glutMainLoop();
+
 
 	return 0;
 }

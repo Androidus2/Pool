@@ -1,6 +1,7 @@
 #include "Manta.h";
 #include <GL/glew.h>       
 #include <GL/freeglut.h> 
+#include "Line.h"
 
 void Manta::drawManta(int VboId, int myMatrixLocation, glm::mat4 myMatrix)
 {
@@ -25,4 +26,14 @@ std::vector <Vector2> Manta::getPoints()
 	points.push_back(point3);
 	points.push_back(point4);
 	return points;
+}
+
+std::vector<Line> Manta::getSlantedSegments()
+{
+	std::vector<Line> segments;
+	Line line1 = { point2, point3 };
+	Line line2 = { point1, point4 };
+	segments.push_back(line1);
+	segments.push_back(line2);
+	return segments;
 }

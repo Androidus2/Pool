@@ -4,6 +4,7 @@
 #include <GL/freeglut.h>
 #include "SOIL.h"			//	Biblioteca pentru texturare;
 #include<iostream>
+#include "Line.h"
 GLuint LoadTexture(const char* texturePath, GLuint &texture)
 {
 	glEnable(GL_BLEND);
@@ -38,7 +39,7 @@ GLuint LoadTexture(const char* texturePath, GLuint &texture)
 	return texture;
 }
 
-
+Circle::Circle() {}
 Circle::Circle(Vector2 center, float radius) {
 	this->center = center;
 	this->radius = radius;
@@ -136,7 +137,7 @@ void Circle::onHitBall(Circle& other)
 		other.velocity = tangent * v2t + normal * v2nFinal;
 
 		// Optionally add restitution (less bouncy)
-		float restitution = 0.98f; // 1.0 = perfectly elastic, <1 = loses energy
+		float restitution = 0.99f; // 1.0 = perfectly elastic, <1 = loses energy
 		this->velocity *= restitution;
 		other.velocity *= restitution;
 	}
@@ -196,4 +197,64 @@ void Circle::collisionManta(Manta& manta)
 	manta.hit = hit;
 
 }
+
+
+void Circle::collisionManta(Circle &prevPos, Manta &manta)
+{
+	//Verifying with main segment
+	
+	Vector2 a = manta.mainsegment1;
+	Vector2 b = manta.mainsegment2;
+
+	float distSq = center.DistanceToSegmentSqr(a, b);
+	bool hit = (distSq <= radius * radius);
+	if (hit)
+	{
+		if (a.y > 250 && b.y > 250)
+		{
+			// Manta sus
+			if (this->velocity.y > 0)
+				this->velocity.y = -this->velocity.y;
+		}
+		else if (b.y < 250 && a.y < 250)
+		{
+			// Manta jos
+			if (this->velocity.y < 0)
+				this->velocity.y = -this->velocity.y;
+		}
+		else if (a.x < 200 && b.x < 200)
+		{
+			// Manta stanga
+			if (this->velocity.x < 0)
+				this->velocity.x = -this->velocity.x;
+		}
+		else if (b.x > 800 && a.x > 800)
+		{
+			// Manta dreapta
+			if (this->velocity.x > 0)
+				this->velocity.x = -this->velocity.x;
+		}
+	}
+
+	// Verifying with slanted segments
+	std::vector<Line> segments = manta.getSlantedSegments();
+	for (auto segment : segments)
+	{
+
+		float distTo = center.DistanceToSegmentSqr(segment.p1, segment.p2);
+		bool hit = (distTo <= radius * radius);
+
+		if (hit)
+		{
+			Vector2 segmentDist = segment.p2 - segment.p1;
+			Vector2 normal = Vector2{ -segmentDist.y, segmentDist.x };
+			normal.Normalize();
+			float vDotN = this->velocity.Dot(normal);
+			this->velocity = this->velocity - normal * (2 * vDotN);
+
+		}
+	}
+}
+
+
 

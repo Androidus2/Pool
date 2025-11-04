@@ -14,7 +14,7 @@ struct Circle {
 	GLuint textureId;
 	bool active = true;
 
-
+	Circle();
 	Circle(Vector2 center, float radius);
 	Circle(Vector2 center, float radius, Vector2 velocity);
 	Circle(Vector2 center, float radius, const char* filePath);
@@ -27,5 +27,6 @@ struct Circle {
 	void onHitBall(Circle& other);
 	void onHitManta(Manta& manta);
 	void collisionManta(Manta& manta);
+	void collisionManta(Circle& nextPoz, Manta& manta);
 
 };

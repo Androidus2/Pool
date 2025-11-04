@@ -1,7 +1,7 @@
 #pragma once
 #include "Vector2.h"
 #include "glm/glm.hpp"
-
+#include "Line.h"
 #include <vector>
 
 struct Manta
@@ -14,6 +14,7 @@ struct Manta
 	Vector2 mainsegment1, mainsegment2;
 
 
+
 	void  drawManta(int VboId, int myMatrixLocation, glm::mat4 myMatrix);
 
 	//constructor wiht all params
@@ -21,7 +22,8 @@ struct Manta
 		: point1(p1), point2(p2), point3(p3), point4(p4), mainsegment1(mainsegment1), mainsegment2(mainsegment2)
 	{
 	}
-	
 	std::vector<Vector2> getPoints();
+
+	std::vector<Line> getSlantedSegments();
 
 };
