@@ -1,0 +1,74 @@
+### Visual Studio ###
+.vs/
+*.vcxproj.user
+*.user
+*.suo
+*.sdf
+*.cachefile
+*.VC.db
+*.VC.opendb
+
+# Build directories
+Debug/
+Release/
+x64/
+x86/
+ipch/
+out/
+bin/
+obj/
+
+# Auto-generated files
+*.ncb
+*.opensdf
+*.tlog
+*.idb
+*.pdb
+*.ilk
+*.log
+*.lastbuildstate
+
+# NuGet / package files
+packages/
+*.nupkg
+
+# CMake support (if using)
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+*.cmake
+build/
+
+### Compiled binaries ###
+*.exe
+*.dll
+*.lib
+*.exp
+
+### Static/Dynamic libs ###
+*.a
+*.so
+*.dylib
+
+### Object files ###
+*.o
+*.obj
+
+### Precompiled headers ###
+*.pch
+
+### Backup / temp ###
+*.tmp
+*.bak
+*.old
+*.swn
+*.swo
+*~
+*.swp
+
+### OS-specific ###
+# macOS
+.DS_Store
+# Windows
+Thumbs.db
+desktop.ini
