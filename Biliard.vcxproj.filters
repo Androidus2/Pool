@@ -1016,9 +1016,6 @@
     <ClInclude Include="Circle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Point.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Vector2.h">
       <Filter>Header Files</Filter>
     </ClInclude>

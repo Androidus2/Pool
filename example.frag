@@ -13,8 +13,6 @@ uniform int color;
 
 void main(void)
   {
-    //float debugValue = tex_Coord.x * tex_Coord.y;
-    //out_Color = vec4(debugValue, 0.0, 0.0, 1.0);
     if (withTexture == 1)
     {
         out_Color = texture(myTexture, tex_Coord);

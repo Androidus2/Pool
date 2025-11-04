@@ -1,41 +1,23 @@
-//
-// ================================================
-// | Grafica pe calculator                        |
-// ================================================
-// | Laboratorul III - 03_02_animatie.cpp |
-// ============================================
-//
-//	Program ce deseneaza un dreptunghi ce se deplaseaza stanga-dreapta si are un patrat ce orbiteaza in jurul sau, folosindu-se tehnicile MODERN OpenGL;
-//	ELEMENTE DE NOUTATE:
-//	- utilizeaza diverse transformari si compunerea acestora folosind biblioteca glm,
-//	- functii pentru utilizarea mouse-ului;
-//
-//
-//	Biblioteci
 
-#include <iostream>			//	Biblioteca necesara pentru afisarea in consola;
-#include <windows.h>        //	Utilizarea functiilor de sistem Windows (crearea de ferestre, manipularea fisierelor si directoarelor);
-#include <stdlib.h>         //  Biblioteci necesare pentru citirea shaderelor;
+#include <iostream>			
+#include <windows.h>        
+#include <stdlib.h>         
 #include <stdio.h>
-#include <GL/glew.h>        //  Define?te prototipurile functiilor OpenGL si constantele necesare pentru programarea OpenGL moderna; 
-#include <GL/freeglut.h>    //	Include functii pentru: 
-							//	- gestionarea ferestrelor si evenimentelor de tastatura si mouse, 
-							//  - desenarea de primitive grafice precum dreptunghiuri, cercuri sau linii, 
-							//  - crearea de meniuri si submeniuri;
-#include "loadShaders.h"	//	Fisierul care face legatura intre program si shadere;
-#include "glm/glm.hpp"		//	Bibloteci utilizate pentru transformari grafice;
+#include <GL/glew.h>        
+#include <GL/freeglut.h>    
+#include "loadShaders.h"	
+#include "glm/glm.hpp"		
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtx/transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include "Circle.h"
 #include <vector>
 #include <math.h>
-#include "SOIL.h"			//	Biblioteca pentru texturare;
+#include "SOIL.h"			
 #include "Manta.h"
 #include "Tac.h"
 using namespace std;
 
-//  Identificatorii obiectelor de tip OpenGL;
 GLuint
 VaoId,
 VboId,
@@ -46,16 +28,12 @@ matrScaleLocation,
 matrTranslLocation,
 matrRotlLocation,
 codColLocation, textureBufferId, textureLocation;
-//	Dimensiunile ferestrei de afisare;
 GLfloat
 winWidth = 1000, winHeight = 500;
-//	Variabile catre matricile de transformare;
 glm::mat4
 myMatrix, resizeMatrix;
 
-glm::vec4 ecran = glm::vec4{ 1.0f, 1.0f, 1.0f, 0.0f };
 
-//	Variabile pentru proiectia ortogonala;
 float xMin = 0.f, xMax = 1000.f, yMin = 0.f, yMax = 500.f;
 bool moving = false, movingTac= false;
 
@@ -72,22 +50,17 @@ Tac tac;
 
 vector<Circle> animationBackgroundHoles;
 vector<Circle> animationBalls;
+float xNegru = 700, yNegru = 250;
+float hole_radius;
+Vector2 initialWhiteBallPosition = { 250.f,250.f };
+
 GLuint LoadTexture(const char* texturePath, GLuint& texture);
 
-
-//  Crearea si compilarea obiectelor de tip shader;
-//	Trebuie sa fie in acelasi director cu proiectul actual;
-//  Shaderul de varfuri / Vertex shader - afecteaza geometria scenei;
-//  Shaderul de fragment / Fragment shader - afecteaza culoarea pixelilor;
 void CreateShaders(void)
 {
 	ProgramId = LoadShaders("example.vert", "example.frag");
 	glUseProgram(ProgramId);
 }
-
-float xNegru = 700, yNegru = 250;
-
-Vector2 initialWhiteBallPosition = { 250.f,250.f};
 
 
 void drawLine(int VboId, int myMatrixLocation, glm::mat4 myMatrix)
@@ -104,8 +77,6 @@ void drawLine(int VboId, int myMatrixLocation, glm::mat4 myMatrix)
 
 	glPointSize(10);
 	glDrawArrays(GL_LINES, 0, 2);
-
-
 };
 
 void drawPoint(int VboId, int myMatrixLocation, glm::mat4 myMatrix)
@@ -171,6 +142,7 @@ void drawWin(int VboId, int myMatrixLocation, glm::mat4 myMatrix)
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
+
 void AddBileInitiale()
 {
 	bile.clear();
@@ -203,12 +175,12 @@ void AddBileInitiale()
 
 
 }
-float hole_radius;
+
 void AddGauriInitiale() {
 		hole_radius = radius + radius / 4;
 		float radius = hole_radius;
-		gauri.push_back(Circle({ radius,radius }, hole_radius, "gaura.png")); // st sus
-		gauri.push_back(Circle({ winWidth / 2,radius }, hole_radius, "gaura.png"));//
+		gauri.push_back(Circle({ radius,radius }, hole_radius, "gaura.png")); 
+		gauri.push_back(Circle({ winWidth / 2,radius }, hole_radius, "gaura.png"));
 		gauri.push_back(Circle({ winWidth-radius ,radius}, hole_radius, "gaura.png"));
 		gauri.push_back(Circle({ radius,winHeight-radius }, hole_radius, "gaura.png"));
 		gauri.push_back(Circle({ winWidth / 2,winHeight -radius}, hole_radius, "gaura.png"));
@@ -218,12 +190,14 @@ void AddGauriInitiale() {
 
 void AddMante()
 {
-	float radius = hole_radius;	float incline = 40;
-	float grosime = 2*radius - 2.5;
-	mante.push_back( Manta({2*radius, yMax}, {winWidth/2-radius, yMax}, { winWidth / 2 - radius -incline, yMax -grosime}, {2*radius + incline, yMax-grosime},
-					{ winWidth / 2 - radius - incline, yMax - grosime }, { 2 * radius + incline, yMax - grosime } ));
-	mante.push_back(Manta({ winWidth / 2 + radius, yMax }, { winWidth - 2 * radius, yMax }, { winWidth - 2 * radius - incline, yMax - grosime }, { winWidth / 2 + radius + incline, yMax - grosime },
-		{ winWidth - 2 * radius - incline, yMax - grosime }, { winWidth / 2 + radius + incline, yMax - grosime }));
+	float radius = hole_radius;	
+	float incline = 40;
+	float grosime = 2 * radius - 2.5;
+
+	mante.push_back( Manta({2*radius, winHeight }, {winWidth/2-radius, winHeight }, { winWidth / 2 - radius -incline, winHeight -grosime}, {2*radius + incline, winHeight -grosime},
+					{ winWidth / 2 - radius - incline, winHeight - grosime }, { 2 * radius + incline, winHeight - grosime } ));
+	mante.push_back(Manta({ winWidth / 2 + radius, winHeight }, { winWidth - 2 * radius, winHeight }, { winWidth - 2 * radius - incline, winHeight - grosime }, { winWidth / 2 + radius + incline, winHeight - grosime },
+		{ winWidth - 2 * radius - incline, winHeight - grosime }, { winWidth / 2 + radius + incline, winHeight - grosime }));
 	mante.push_back(Manta({ 2 * radius, 0 }, { winWidth / 2 - radius, 0 }, { winWidth / 2 - radius - incline, grosime }, { 2 * radius + incline, grosime },
 			{ winWidth / 2 - radius - incline, grosime }, { 2 * radius + incline, grosime }	));
 	mante.push_back(Manta({ winWidth / 2 + radius, 0 }, { winWidth - 2 * radius, 0 }, { winWidth - 2 * radius - incline, grosime }, { winWidth / 2 + radius + incline, grosime },
@@ -233,8 +207,6 @@ void AddMante()
 		{ grosime, winHeight - 2 * radius - incline }, { grosime, 2 * radius + incline } ));
 	mante.push_back(Manta({ winWidth, 2 * radius }, { winWidth, winHeight - 2 * radius }, { winWidth - grosime, winHeight - 2 * radius - incline }, { winWidth - grosime, 2 * radius + incline },
 		{ winWidth - grosime, winHeight - 2 * radius - incline }, { winWidth - grosime, 2 * radius + incline }));
-
-
 }
 
 void AddTac()
@@ -291,38 +263,29 @@ void AddAnimation() {
 		ball.active = false;
 }
 
-//  Se initializeaza un Vertex Buffer Object (VBO) pentru tranferul datelor spre memoria placii grafice (spre shadere);
-//  In acesta se stocheaza date despre varfuri (coordonate, culori, indici, texturare etc.);
 void CreateVBO(void)
 {
-	//  Coordonatele varfurilor;
 	GLfloat Vertices[] = {
 		//	Varfuri pentru axe;
 			100.0f, 0.0f, 0.0f, 1.0f,
 	};
 
-	//  Culorile axelor;
 	GLfloat Colors[10] ;
 
-	//  Transmiterea datelor prin buffere;
-
-	//  Se creeaza / se leaga un VAO (Vertex Array Object) - util cand se utilizeaza mai multe VBO;
-	glGenVertexArrays(1, &VaoId);                                                   //  Generarea VAO si indexarea acestuia catre variabila VaoId;
+	glGenVertexArrays(1, &VaoId);                                                   
 	glBindVertexArray(VaoId);
 
-	//  Se creeaza un buffer pentru VARFURI;
-	glGenBuffers(1, &VboId);                                                        //  Generarea bufferului si indexarea acestuia catre variabila VboId;
-	glBindBuffer(GL_ARRAY_BUFFER, VboId);                                           //  Setarea tipului de buffer - atributele varfurilor;
-	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_STATIC_DRAW);      //  Punctele sunt "copiate" in bufferul curent;
-	//  Se asociaza atributul (0 = coordonate) pentru shader;
+	glGenBuffers(1, &VboId);                                                        
+	glBindBuffer(GL_ARRAY_BUFFER, VboId);                                           
+	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_STATIC_DRAW);      
+	
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
 
-	//  Se creeaza un buffer pentru CULOARE;
 	glGenBuffers(1, &ColorBufferId);
 	glBindBuffer(GL_ARRAY_BUFFER, ColorBufferId);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(Colors), Colors, GL_STATIC_DRAW);
-	//  Se asociaza atributul (1 =  culoare) pentru shader;
+	
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	
@@ -340,13 +303,11 @@ void CreateVBO(void)
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, 0);
 }
 
-//  Elimina obiectele de tip shader dupa rulare;
 void DestroyShaders(void)
 {
 	glDeleteProgram(ProgramId);
 }
 
-//  Eliminarea obiectelor de tip VBO dupa rulare;
 void DestroyVBO(void)
 {
 	//  Eliberarea atributelor din shadere (pozitie, culoare, texturare etc.);
@@ -363,21 +324,17 @@ void DestroyVBO(void)
 	glDeleteVertexArrays(1, &VaoId);
 }
 
-//  Functia de eliberare a resurselor alocate de program;
 void Cleanup(void)
 {
 	DestroyShaders();
 	DestroyVBO();
 }
 
-//  Setarea parametrilor necesari pentru fereastra de vizualizare;
 void Initialize(void)
 {
-
-
-	glClearColor(0.0f, 0.588f, 0.196f, 1.0f);		//  Culoarea de fond a ecranului;
-	CreateVBO();								//  Trecerea datelor de randare spre bufferul folosit de shadere;
-	CreateShaders();							//  Initilizarea shaderelor;
+	glClearColor(0.0f, 0.588f, 0.196f, 1.0f);		
+	CreateVBO();								
+	CreateShaders();							
 	myMatrixLocation = glGetUniformLocation(ProgramId, "myMatrix");
 	textureLocation = glGetUniformLocation(ProgramId, "myTexture");
 	AddBileInitiale();
@@ -387,10 +344,9 @@ void Initialize(void)
 	AddAnimation();
 }
 
-//  Functia de desenarea a graficii pe ecran;
 void RenderFunction(void)
 {
-	glClear(GL_COLOR_BUFFER_BIT);			//  Se curata ecranul OpenGL pentru a fi desenat noul continut;
+	glClear(GL_COLOR_BUFFER_BIT);			
 	
 	resizeMatrix = glm::ortho(xMin, xMax, yMin, yMax);
 
@@ -404,6 +360,7 @@ void RenderFunction(void)
 		glFlush();
 		return;
 	}
+
 	if (win)
 	{
 		glUniform1i(glGetUniformLocation(ProgramId, "withTexture"), 1);
@@ -413,6 +370,7 @@ void RenderFunction(void)
 		glFlush();
 		return;
 	}
+
 	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &resizeMatrix[0][0]);
 	glPointSize(5);
 
@@ -462,8 +420,8 @@ void RenderFunction(void)
 		tac.drawTac(VboId, myMatrixLocation, resizeMatrix);
 	}
 
-	glutSwapBuffers();	//	Inlocuieste imaginea deseneata in fereastra cu cea randata; 
-	glFlush();	//  Asigura rularea tuturor comenzilor OpenGL apelate anterior;
+	glutSwapBuffers();	
+	glFlush();	
 }
 
 Vector2 transformScreenToWorld(int x, int y,
@@ -473,8 +431,8 @@ Vector2 transformScreenToWorld(int x, int y,
 	int screenWidth = glutGet(GLUT_WINDOW_WIDTH);
 	int screenHeight = glutGet(GLUT_WINDOW_HEIGHT);
 
-	float nx = static_cast<float>(x) / static_cast<float>(screenWidth);
-	float ny = 1.0f - static_cast<float>(y) / static_cast<float>(screenHeight); 
+	float nx = (float)x / (float)screenWidth;
+	float ny = 1.0f - (float)y / (float)(screenHeight); 
 
 	Vector2 world;
 	world.x = xMin + nx * (xMax - xMin);
@@ -494,14 +452,12 @@ void UseMouse(int button, int state, int x, int y)
 		Vector2 screenCoord = transformScreenToWorld(x, y,
 			xMin, xMax,
 			yMin, yMax);
-		std::cout << screenCoord.x << " " << screenCoord.y << endl;
 		Vector2 dir = screenCoord - bile[0].center;
 		dir.Normalize();
 		dir = dir * speed;
 		bile[0].velocity = dir;
 		moving = true;
 		movingTac = true;
-		tacIndex = 100;
 		tacMatrix = tac.matTranslation * tac.matRotation;
 		break;
 	}
@@ -512,9 +468,6 @@ void UseMouse(int button, int state, int x, int y)
 
 void update(int value)
 {
-
-
-
 	if (movingTac)
 	{
 		if (speed == 0)
@@ -563,7 +516,6 @@ void update(int value)
 			for (auto& manta : mante)
 			{
 				if (bile[i].active)
-					//continue;
 					bile[i].collisionManta(manta);
 			}
 
@@ -611,7 +563,7 @@ void update(int value)
 		}
 
 	}
-	// aici se pot face animatii
+
 	glutPostRedisplay();
 	glutTimerFunc(16, update, 0);
 
@@ -621,8 +573,8 @@ void update(int value)
 
 void ProcessSpecialKeys(int key, int xx, int yy)
 {
-	switch (key)			//	Procesarea tastelor 'LEFT', 'RIGHT', 'UP', 'DOWN'
-	{						//	duce la deplasarea patratului pe axele Ox si Oy;
+	switch (key)			
+	{						
 	case GLUT_KEY_UP:
 		if (!movingTac) {
 			speed += 1;
@@ -661,23 +613,21 @@ int main(int argc, char* argv[])
 {
 
 	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);					//	Se folosesc 2 buffere (unul pentru afisare si unul pentru randare => animatii cursive) si culori RGB;
-	glutInitWindowPosition(100, 100);								//  Pozitia initiala a ferestrei;
-	glutInitWindowSize(winWidth, winHeight);									//  Dimensiunea ferestrei;
-	glutCreateWindow("Dreptunghi cu satelit - OpenGL <<nou>>");		//	Creeaza fereastra de vizualizare, indicand numele acesteia;
-
-	//	Se initializeaza GLEW si se verifica suportul de extensii OpenGL modern disponibile pe sistemul gazda;
-	//  Trebuie initializat inainte de desenare;
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);					
+	glutInitWindowSize(winWidth, winHeight);									
+	glutCreateWindow("Biliard");	
 
 	glewInit();
 
-	Initialize();						//  Setarea parametrilor necesari pentru fereastra de vizualizare; 
-	glutDisplayFunc(RenderFunction);	//  Desenarea scenei in fereastra;
-	glutCloseFunc(Cleanup);				//  Eliberarea resurselor alocate de program;
+	Initialize();						
+	glutDisplayFunc(RenderFunction);	
+	glutCloseFunc(Cleanup);				
 	glutMouseFunc(UseMouse);
+
 	glutPassiveMotionFunc(MouseView);
 	glutTimerFunc(16, update, 0);
 	glutSpecialFunc(ProcessSpecialKeys);
+	
 	glutMainLoop();
 
 

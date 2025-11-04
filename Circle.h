@@ -14,11 +14,10 @@ struct Circle {
 	GLuint textureId;
 	bool active = true;
 
-	// animation / transform
-	glm::mat4 transformMatrix = glm::mat4(1.0f); // holds T(center)*R*S*T(-center)
+	glm::mat4 transformMatrix = glm::mat4(1.0f); 
 	float animTime = 0.0f;
 	bool animPlaying = false;
-	float animDuration = 1.0f; // seconds
+	float animDuration = 1.0f;
 
 
 	Circle();
@@ -32,9 +31,7 @@ struct Circle {
 	void moveCircle( int xMin, int xMax, int yMin, int yMax, float deltaTime = 1);
 	void drawCircle(int VboId, int myMatrixLocation, glm::mat4 myMatrix, int textureLocation);
 	void onHitBall(Circle& other);
-	void onHitManta(Manta& manta);
 	void collisionManta(Manta& manta);
-	void collisionManta(Circle& nextPoz, Manta& manta);
 
 	void animate(float deltaTime);
 	void playAnimation(float durationSeconds = 1.0f);

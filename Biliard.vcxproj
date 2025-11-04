@@ -487,7 +487,6 @@ xcopy /y /d "$(ProjectDir)lib\x64\SOIL\*.dll" "$(OutDir)" &amp;</Command>
     <ClInclude Include="include\SOIL.h" />
     <ClInclude Include="Line.h" />
     <ClInclude Include="Manta.h" />
-    <ClInclude Include="Point.h" />
     <ClInclude Include="Tac.h" />
     <ClInclude Include="Vector2.h" />
   </ItemGroup>

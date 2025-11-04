@@ -9,6 +9,7 @@
 #include "glm/gtx/transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include "Line.h"
+
 GLuint LoadTexture(const char* texturePath, GLuint &texture)
 {
 	glEnable(GL_BLEND);
@@ -67,12 +68,12 @@ Circle::Circle(Vector2 center, float radius,  const char* filePath)
 
 std::vector<Vector2> Circle::getPoints() {
 	std::vector<Vector2> points;
-	float latura = 2 * this->radius;
+	float edge = 2 * this->radius;
 	Vector2 topLeft = { this->center.x - this->radius, this->center.y + this->radius };
 	points.push_back(topLeft);
-	points.push_back(topLeft + Vector2{ latura, 0 });
-	points.push_back(topLeft + Vector2{ latura, -latura });
-	points.push_back(topLeft + Vector2{ 0, -latura });
+	points.push_back(topLeft + Vector2{ edge, 0 });
+	points.push_back(topLeft + Vector2{ edge, -edge });
+	points.push_back(topLeft + Vector2{ 0, -edge });
 
 	return points;
 }
@@ -103,8 +104,8 @@ void Circle::moveCircle( int xMin, int xMax, int yMin, int yMax, float deltaTime
 	}
 
 
-	float frecare = 0.99f;
-	this->velocity  = this->velocity * frecare ;
+	float friction = 0.99f;
+	this->velocity  = this->velocity * friction;
 
 	if ( this->velocity.GetSqrMagnitude() < 1 )
 		this->velocity = Vector2{ 0,0 };
@@ -116,46 +117,29 @@ void Circle::onHitBall(Circle& other)
 	float distance = dir.GetMagnitude();
 	float overlap = 2 * radius - distance;
 
-	if (overlap > 0) {
-		// Separate balls so they don't overlap
-		dir.Normalize();
-		this->center -= dir * (overlap / 2);
-		other.center += dir * (overlap / 2);
+	Vector2 normal = dir.GetNormalized();
+	this->center -= normal * (overlap / 2);
+	other.center += normal * (overlap / 2);
 
-		// Compute normal and tangent vectors
-		Vector2 normal = dir;
-		Vector2 tangent{ normal.y * -1, normal.x };
+	Vector2 tangent{ normal.y * -1, normal.x };
 
-		// Decompose velocities into normal and tangent components
-		float v1n = this->velocity.Dot(normal);
-		float v1t = this->velocity.Dot(tangent);
-		float v2n = other.velocity.Dot(normal);
-		float v2t = other.velocity.Dot(tangent);
+	float componentaNormala1 = this->velocity.Dot(normal);
+	float componentaTangentiala1 = this->velocity.Dot(tangent);
+	float componentaNormala2 = other.velocity.Dot(normal);
+	float componentaTangentiala2= other.velocity.Dot(tangent);
 
-		// Swap normal components for equal-mass elastic collision
-		float v1nFinal = v2n;
-		float v2nFinal = v1n;
+	float cn1Final = componentaNormala2;
+	float cn2Final = componentaNormala1;
 
-		// Recombine
-		this->velocity = tangent * v1t + normal * v1nFinal;
-		other.velocity = tangent * v2t + normal * v2nFinal;
+	this->velocity = tangent * componentaTangentiala1 + normal * cn1Final;
+	other.velocity = tangent * componentaTangentiala2 + normal * cn2Final;
 
-		// Optionally add restitution (less bouncy)
-		float restitution = 0.99f; // 1.0 = perfectly elastic, <1 = loses energy
-		this->velocity *= restitution;
-		other.velocity *= restitution;
-	}
 }
-
-
-
 
 void Circle::drawCircle(int VboId, int myMatrixLocation, glm::mat4 myMatrix, int textureLocation)
 {
 	std::vector<Vector2> points = this->getPoints();
-	//points.push_back(center);
 	
-	//std::cout << this->textureId << " ";
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, this->textureId);
 	glUniform1i(textureLocation, 0);
@@ -231,13 +215,11 @@ void Circle::collisionManta( Manta &manta)
 			Vector2 normal = Vector2{ -segmentDist.y, segmentDist.x };
 			normal.Normalize();
 			float vDotN = this->velocity.Dot(normal);
-			this->velocity = this->velocity - normal * (2 * vDotN);
+			this->velocity = this->velocity - normal  * vDotN * 2;
 
 		}
 	}
 }
-
-
 
 void Circle::animate(float deltaTime)
 {
@@ -250,21 +232,16 @@ void Circle::animate(float deltaTime)
 		animPlaying = false;
 	}
 
-	// linear interpolation; replace with easing if desired
-	float scale = t; // 0 -> 1
-	float rotationRad = glm::radians(360.0f * t);
+	float scale = t; // este in [0,1]
+	float rotationRadians = glm::radians(360.0f * t);
 
-	// Build transform that rotates & scales around center:
-	// transformMatrix = T(center) * R(rotation) * S(scale) * T(-center)
-	glm::mat4 Tneg = glm::translate(glm::mat4(1.0f), glm::vec3(-this->center.x, -this->center.y, 0.0f));
-	glm::mat4 S = glm::scale(glm::mat4(1.0f), glm::vec3(scale, scale, 1.0f));
-	glm::mat4 R = glm::rotate(glm::mat4(1.0f), rotationRad, glm::vec3(0.0f, 0.0f, 1.0f));
-	glm::mat4 Tpos = glm::translate(glm::mat4(1.0f), glm::vec3(this->center.x, this->center.y, 0.0f));
+	glm::mat4 origineScena = glm::translate(glm::mat4(1.0f), glm::vec3(-this->center.x, -this->center.y, 0.0f));
+	glm::mat4 matScale = glm::scale(glm::mat4(1.0f), glm::vec3(scale, scale, 1.0f));
+	glm::mat4 matRotation = glm::rotate(glm::mat4(1.0f), rotationRadians, glm::vec3(0.0f, 0.0f, 1.0f));
+	glm::mat4 translateBack = glm::translate(glm::mat4(1.0f), glm::vec3(this->center.x, this->center.y, 0.0f));
 
-	transformMatrix = Tpos * R * S * Tneg;
+	transformMatrix = translateBack * matRotation * matScale * origineScena;
 }
-
-
 
 void Circle::playAnimation(float durationSeconds)
 {

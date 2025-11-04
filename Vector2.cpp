@@ -54,33 +54,31 @@ Vector2 Vector2::operator*(float scalar) const {
 Vector2 Vector2::operator/(float scalar) const {
     return Vector2(*this) /= scalar;
 }
-
 Vector2 operator*(float scalar, const Vector2& v) {
     return v * scalar;
 }
 
 
-// Dot product function
 float Vector2::Dot(const Vector2& other) const {
     return this->x * other.x + this->y * other.y;
 }
 
 float Vector2::DistanceToSegmentSqr(const Vector2& A, const Vector2& B) const
 {
-    Vector2 AB = B - A;
-    Vector2 AP = *this - A;
+    Vector2 ab = B - A;
+    Vector2 ap = *this - A;
 
-    float ab2 = AB.x * AB.x + AB.y * AB.y;
+    float ab2 = ab.x * ab.x + ab.y * ab.y;
     if (ab2 == 0.0f)
-        return AP.x * AP.x + AP.y * AP.y; 
+        return ap.x * ap.x + ap.y * ap.y;
 
-    float t = (AP.x * AB.x + AP.y * AB.y) / ab2;
+    float t = (ap.x * ab.x + ap.y * ab.y) / ab2;
     if (t < 0.0f)
         t = 0.0f;
     else if (t > 1.0f)
         t = 1.0f;
 
-    Vector2 closest = { A.x + AB.x * t, A.y + AB.y * t };
+    Vector2 closest = { A.x + ab.x * t, A.y + ab.y * t };
     float dx = x - closest.x;
     float dy = y - closest.y;
     return dx * dx + dy * dy;

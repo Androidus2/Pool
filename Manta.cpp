@@ -18,7 +18,7 @@ void Manta::drawManta(int VboId, int myMatrixLocation, glm::mat4 myMatrix)
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
-std::vector <Vector2> Manta::getPoints()
+std::vector<Vector2> Manta::getPoints()
 {
 	std::vector<Vector2> points;
 	points.push_back(point1);
